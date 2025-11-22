@@ -24,7 +24,8 @@ embedding_manager = EmbeddingManager()
 chat_manager = ChatManager()
 
 class UrlRequest(BaseModel):
-    url: str
+    urls: List[str]
+
 
 class QueryRequest(BaseModel):
     query: str
@@ -89,29 +90,42 @@ async def voice_ws(websocket: WebSocket):
         print("Client disconnected")
         
 
-@app.post("/process-url/", summary="Process a URL and add content to index")
+@app.post("/process-url/", summary="Process multiple URLs and add content to index")
 async def process_url_endpoint(request: UrlRequest):
     """
-    Scrapes content from a URL and adds it to the RAG knowledge base.
+    Scrapes content from multiple URLs and adds them to the RAG knowledge base.
     """
-    url = request.url
-    print(f"Received URL for processing: {url}")
-    
-    docs = processor.process_url(url)
-    
-    if not docs:
-        raise HTTPException(status_code=400, detail="Failed to extract content from URL or URL is empty.")
-    success = embedding_manager.create_embeddings(docs)
-    
+    all_docs = []
+
+    for url in request.urls:
+        print(f"Received URL for processing: {url}")
+        
+        docs = processor.process_url(url)
+
+        if not docs:
+            print(f"Warning: Failed to extract content from {url}")
+            continue
+
+        all_docs.extend(docs)
+
+    if not all_docs:
+        raise HTTPException(status_code=400, detail="Failed to extract content from provided URLs.")
+
+    success = embedding_manager.create_embeddings(all_docs)
+
     if not success:
         raise HTTPException(status_code=500, detail="Failed to update embeddings with URL content.")
+
     chat_manager.set_retriever(embedding_manager.retriever)
-    
+
     return {
-        "message": f"Successfully processed URL. Added {len(docs)} chunks to the knowledge base.",
-        "source": url
-    }        
+        "message": f"Successfully processed {len(request.urls)} URLs.",
+        "chunks_added": len(all_docs)
+    }
+      
 
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000)
+# Rendered command to run with Gunicorn:
+# gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind :$PORT
