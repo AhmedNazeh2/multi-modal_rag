@@ -10,15 +10,24 @@ from src.chat import ChatManager
 from pydub import AudioSegment
 import soundfile as sf
 import numpy as np
-import io
+import io, os
 import src.voice as voice
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "")
+
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
 
 app = FastAPI(title="RAG Chat multi-modal PDF Chatbot with Voice Support")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 processor = DocumentProcessor()
 embedding_manager = EmbeddingManager()
 chat_manager = ChatManager()
