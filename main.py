@@ -23,7 +23,7 @@ load_dotenv(override=True)
 app = FastAPI(title="RAG Chat multi-modal PDF Chatbot with Voice Support")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
