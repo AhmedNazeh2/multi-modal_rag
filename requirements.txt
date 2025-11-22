@@ -24,7 +24,8 @@ openai
 elevenlabs
 python-dotenv
 assemblyai
-uvicorn
+gunicorn
+uvicorn[standard]
 fastapi
 websockets
 edge_tts
@@ -33,3 +34,4 @@ openai-whisper
 librosa
 ffmpeg
 beautifulsoup4
+
